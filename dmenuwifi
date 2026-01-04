@@ -1,0 +1,48 @@
+#!/bin/bash
+
+WPA_CONF="/etc/wpa_supplicant/wpa_supplicant.conf"
+INTERFACE="${1:-wlp0s20f3}"
+
+# Extract saved network SSIDs from wpa_supplicant.conf
+get_saved_networks() {
+    if [[ ! -r "$WPA_CONF" ]]; then
+        notify-send "Error" "Cannot read $WPA_CONF" 2>/dev/null
+        echo "Error: Cannot read $WPA_CONF" >&2
+        exit 1
+    fi
+    grep -oP '^\s*ssid="\K[^"]+' "$WPA_CONF"
+}
+
+# Get network ID by SSID using wpa_cli
+get_network_id() {
+    local ssid="$1"
+    wpa_cli -i "$INTERFACE" list_networks | tail -n +2 | awk -F'\t' -v ssid="$ssid" '$2 == ssid {print $1; exit}'
+}
+
+# Main
+networks=$(get_saved_networks)
+
+if [[ -z "$networks" ]]; then
+    notify-send "WiFi" "No saved networks found" 2>/dev/null
+    exit 1
+fi
+
+selected=$(echo "$networks" | dmenu -i -p "WiFi:")
+
+if [[ -z "$selected" ]]; then
+    exit 0
+fi
+
+network_id=$(get_network_id "$selected")
+
+if [[ -z "$network_id" ]]; then
+    notify-send "WiFi" "Network '$selected' not found in wpa_cli" 2>/dev/null
+    exit 1
+fi
+
+# Disable all networks and enable selected one
+wpa_cli -i "$INTERFACE" disable_network all >/dev/null
+wpa_cli -i "$INTERFACE" enable_network "$network_id" >/dev/null
+wpa_cli -i "$INTERFACE" reconnect >/dev/null
+
+notify-send "WiFi" "Switching to $selected" 2>/dev/null
