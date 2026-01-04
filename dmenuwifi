@@ -1,16 +1,10 @@
 #!/bin/bash
 
-WPA_CONF="/etc/wpa_supplicant/wpa_supplicant.conf"
 INTERFACE="${1:-wlp0s20f3}"
 
-# Extract saved network SSIDs from wpa_supplicant.conf
+# Get saved network SSIDs from wpa_cli
 get_saved_networks() {
-    if [[ ! -r "$WPA_CONF" ]]; then
-        notify-send "Error" "Cannot read $WPA_CONF" 2>/dev/null
-        echo "Error: Cannot read $WPA_CONF" >&2
-        exit 1
-    fi
-    grep -oP '^\s*ssid="\K[^"]+' "$WPA_CONF"
+    wpa_cli -i "$INTERFACE" list_networks 2>/dev/null | tail -n +2 | cut -f2
 }
 
 # Get network ID by SSID using wpa_cli
