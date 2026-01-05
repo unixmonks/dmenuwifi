@@ -18,9 +18,9 @@ A simple dmenu-based WiFi network switcher for wpa_supplicant.
 
 ## How it works
 
-1. Parses saved networks from `/etc/wpa_supplicant/wpa_supplicant.conf`
+1. Fetches saved networks using `wpa_cli list_networks`
 2. Displays them in dmenu for selection
-3. Uses wpa_cli to switch to the selected network
+3. Disables all networks and enables the selected one via wpa_cli
 
 ## Installation
 
