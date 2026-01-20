@@ -1,6 +1,23 @@
 #!/bin/bash
 
-INTERFACE="${1:-wlp0s20f3}"
+INTERFACE="wlp0s20f3"
+DMENU_OPTS=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -i)
+            INTERFACE="$2"
+            shift 2
+            ;;
+        -fn|-nb|-nf|-sb|-sf|-m|-l|-p)
+            DMENU_OPTS+=("$1" "$2")
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
 
 # Get saved network SSIDs from wpa_cli
 get_saved_networks() {
@@ -21,7 +38,7 @@ if [[ -z "$networks" ]]; then
     exit 1
 fi
 
-selected=$(echo "$networks" | dmenu -i -p "WiFi:")
+selected=$(echo "$networks" | dmenu -i -p "WiFi:" "${DMENU_OPTS[@]}")
 
 if [[ -z "$selected" ]]; then
     exit 0
